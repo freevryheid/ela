@@ -1,0 +1,132 @@
+      SUBROUTINE ELSY8
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      COMMON E(5),V(5),DI(5),R(100),Z(10),EX(32),
+     1        CDAB(5,736),AJ1(184),RJ1(184),RJ0(184),
+     2        VSE,SSE,RDP,VDP,RSE,TSE,ST1,ST2,ST3,ST4,
+     3        WR,WZ,WRL,RL,PRES,RLP,TST1,TST2,TST3,TST4,
+     4        NSYM,NSY,NLSW,NBZ,NGQP,NX,NEX,NR,NRC,NZ,NZC,MSW,
+     5        NEL,NEI,NI,NBLL,LAY,NTEST,NTSI,ITS,IND,NAB,NBZC,
+     6        KSW1,KSW2,KSW3,KSW4,KSW5,KSW6,KSW7,KSW8,KSW9
+      COMMON XL(10),YL(10),XP(10),YP(10),LAYZ(10),
+     1  ANS(6,100,10),AS(9,3,10),TITLE(40),IXR(100),NLD,NXY,IO
+      COMMON / COM2 / GP(184)
+C *** EXCLUSIVE ROUTINE ARRAYS
+      DIMENSION GF(4),TEST(11)
+      DATA  GF /
+     1 .173927423 , .326072577 , .326072577 , .173927423 /
+      DATA DIV /    .861136312 /
+      ITS=1
+      VSE=0.0
+      SSE=0.0
+      RDP=0.0
+      VDP=0.0
+      RSE=0.0
+      TSE=0.0
+      ST1=2.0*V(LAY)
+      ST2=1.0-ST1
+      ST3=2.0*ST2
+      ST4=1.0+ST1
+      KSW5=1
+      KSW6=1
+      NAB=0
+      NBZC=0
+      K1=0
+      K2=-3
+      DO 36 K3=1,NBZ
+      S1=0.0
+      S2=0.0
+      S3=0.0
+      S4=0.0
+      S5=0.0
+      S6=0.0
+      NBZC=NBZC+1
+      DO 22 K4=1,NGQP
+      K1=K1+1
+      K2=K2+4
+      FM=GP(K1)/WRL
+      GO TO ( 9,8),KSW4
+    8 VAL=1.0
+      GO TO 11
+    9 VAL=FM*WZ
+      IF(VAL-TST1 ) 10,10,6
+    6 KSW6=2
+      GO TO 22
+   10 VAL=EXP(VAL)
+   11 T2=FM*AJ1(K1)*GF(K4)
+      GO TO ( 13,12),KSW3
+   12 T1=FM*T2
+      GO TO 14
+   13 T1=T2*RJ0(K1)
+      T2=T2*RJ1(K1)
+      T3=FM*T1
+C *** C - D  SECTION
+   14 D=CDAB(LAY,K2+1)
+      CD=FM*(CDAB(LAY,K2)+D*WZ)/VAL
+      DE=D/VAL
+      GO TO ( 16,15),KSW3
+   15 S1=S1+T1*(ST2*DE+CD)
+      S4=S4+T2*(-ST3*DE-CD)
+      S5=S5+T1*((ST1+0.5)*DE-0.5*CD)
+      GO TO 17
+   16 S1=S1+T3*(ST2*DE+CD)
+      S2=S2+FM*T2*(-ST1*DE+CD)
+      S3=S3+T2*(DE-CD)
+      S5=S5+T3*(ST4*DE-CD)
+      S4=S4-T1*(ST3*DE+CD)
+      S6=S6+T3*DE
+C *** A - B  SECTION
+   17 GO TO ( 32,22),KSW5
+   32 B=CDAB(LAY,K2+3)
+      IF(B) 18,31,18
+   31 KSW5=2
+      NAB=NBZC
+      GO TO 22
+   18 AB=FM*(CDAB(LAY,K2+2)+B*WZ)*VAL
+      BE=B*VAL
+      GO TO ( 20,19),KSW3
+   19 S1=S1+T1*(ST2*BE-AB)
+      S4=S4+T2*(ST3*BE-AB)
+      S5=S5+T1*((ST1+0.5)*BE+0.5*AB)
+      GO TO 22
+   20 S1=S1+T3*(ST2*BE-AB)
+      S2=S2+FM*T2*(ST1*BE+AB)
+      S3=S3+T2*(BE+AB)
+      S4=S4+T1*(ST3*BE-AB)
+      S5=S5+T3*(ST4*BE+AB)
+      S6=S6+T3*BE
+   22 CONTINUE
+      SF=(GP(K1)-GP(K1-3))/(DIV*WRL)
+      VSE=VSE+S1*SF
+      VDP=VDP+S4*SF
+      GO TO ( 24,23),KSW3
+   23 RSE=RSE+S5*SF
+C *** FORMULAS CHANGED FROM
+C     TSE=TSE+ST1*S6*SF
+C *** TO
+      TSE=RSE
+      GO TO 25
+   24 SSE=SSE+S2*SF
+      RDP=RDP+S3*SF
+      RSE=RSE+SF*(S5-S3/WR)
+      TSE=TSE+SF*(ST1*S6+S3/WR)
+   25 TESTH=ABS(2.0*S1*RL*SF)-TST2
+      IF(ITS-NTSI) 26,27,27
+   26 TEST(ITS)=TESTH
+      ITS=ITS+1
+      GO TO 34
+   27 TEST(NTSI)=TESTH
+      DO 30 K4=1,NTEST
+      IF(TESTH-TEST(K4)) 28,29,29
+   28 TESTH=TEST(K4)
+   29 TEST(K4)=TEST(K4+1)
+   30 CONTINUE
+      IF(TESTH) 42,42,34
+   34 GO TO ( 36,43),KSW6
+   36 CONTINUE
+   41 IND=1
+      GO TO 50
+   42 IND=2
+      GO TO 50
+   43 IND=3
+   50 RETURN
+      END

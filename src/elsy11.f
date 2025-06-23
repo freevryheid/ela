@@ -1,0 +1,151 @@
+      SUBROUTINE ELSY11
+C *** FOR USE WITH ELSYM5
+C
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      COMMON E(5),V(5),DI(5),R(100),Z(10),EX(32),
+     1        CDAB(5,736),AJ1(184),RJ1(184),RJ0(184),
+     2        VSE,SSE,RDP,VDP,RSE,TSE,ST1,ST2,ST3,ST4,
+     3        WR,WZ,WRL,RL,PRES,RLP,TST1,TST2,TST3,TST4,
+     4        NSYM,NSY,NLSW,NBZ,NGQP,NX,NEX,NR,NRC,NZ,NZC,MSW,
+     5        NEL,NEI,NI,NBLL,LAY,NTEST,NTSI,ITS,IND,NAB,NBZC,
+     6        KSW1,KSW2,KSW3,KSW4,KSW5,KSW6,KSW7,KSW8,KSW9
+      COMMON XL(10),YL(10),XP(10),YP(10),LAYZ(10),
+     1  ANS(6,100,10),AS(9,3,10),TITLE(40),IXR(100),NLD,NXY,IO
+C *** EXCLUSIVE ROUTINE ARRAYS
+      DIMENSION A(6),SET(3,3),DC(3,3),T(3)
+      CHARACTER*10 LAB1(3,9)
+      CHARACTER*5  LAB2(3,9)
+      DATA LAB1    /'NORMAL STR','ESSES',' ','SHEAR STRE',
+     1 'SSES',' ','PRINCIPAL ','STRESSES',' ','PRINCIPAL ',
+     2 'SHEAR STRE','SSES','DISPLACEME','NTS',' ','NORMAL STR',
+     3 'AINS',' ','SHEAR STRA','INS',' ','PRINCIPAL ','STRAINS',
+     4 ' ','PRINCIPAL ','SHEAR STRA','INS'/
+C
+      DATA LAB2    /'SXX','SYY','SZZ','SXY','SXZ','SYZ',
+     1 'PS 1','PS 2','PS 3','PSS 1','PSS 2','PSS 3','UX','UY',
+     2 'UZ','EXX','EYY','EZZ','EXY','EXZ','EYZ','PE 1','PE 2',
+     3 'PE 3','PSE 1','PSE 2','PSE 3'/
+
+      DO 8 NZC=1,NZ
+      LAY=LAYZ(NZC)
+      ELAY=E(LAY)
+      VLAY=V(LAY)
+      SSC=2.0*(1.0+VLAY)/ELAY
+      DO 9 K1=1,9
+      DO 9 K2=1,3
+      DO 9 K3=1,NXY
+      AS(K1,K2,K3)=0.0
+    9 CONTINUE
+      K9=1
+      DO 10 NXYC=1,NXY
+      XPI=XP(NXYC)
+      YPI=YP(NXYC)
+      DO 14 NLDC=1,NLD
+      IR=IXR(K9)
+      DO 16 K1=1,6
+      A(K1)=ANS(K1,IR,NZC)
+   16 CONTINUE
+      RI=R(IR)
+      IF(RI-.001) 13,13,11
+   11 SINT=(YPI-YL(NLDC))/RI
+      SINT2=SINT**2
+      COST=(XPI-XL(NLDC))/RI
+      COST2=COST**2
+C *** NORMAT STRESSES
+C *** SXX
+      AS(1,1,NXYC)=AS(1,1,NXYC)+COST2*A(1)+SINT2*A(2)
+C *** SYY
+      AS(1,2,NXYC)=AS(1,2,NXYC)+COST2*A(2)+SINT2*A(1)
+C *** SZZ
+      AS(1,3,NXYC)=AS(1,3,NXYC)+A(3)
+C *** SHEAR STRESSES
+C *** SXY
+      AS(2,1,NXYC)=AS(2,1,NXYC)+COST*SINT*(A(1)-A(2))
+C *** SXZ
+      AS(2,2,NXYC)=AS(2,2,NXYC)+COST*A(4)
+C *** SYZ
+      AS(2,3,NXYC)=AS(2,3,NXYC)+SINT*A(4)
+C *** DISPLACEMENTS
+C *** UX
+      AS(5,1,NXYC)=AS(5,1,NXYC)+COST*A(5)
+C *** UY
+      AS(5,2,NXYC)=AS(5,2,NXYC)+SINT*A(5)
+C *** UZ
+      AS(5,3,NXYC)=AS(5,3,NXYC)+A(6)
+      GO TO 15
+C
+   13 AS(1,1,NXYC)=AS(1,1,NXYC)+A(1)
+      AS(1,2,NXYC)=AS(1,2,NXYC)+A(2)
+      AS(1,3,NXYC)=AS(1,3,NXYC)+A(3)
+      AS(2,2,NXYC)=AS(2,2,NXYC)+A(4)
+      AS(5,1,NXYC)=AS(5,1,NXYC)+A(5)
+      AS(5,3,NXYC)=AS(5,3,NXYC)+A(6)
+   15 K9=K9+1
+   14 CONTINUE
+      DO 20 K1=1,3
+      SET(K1,K1)=AS(1,K1,NXYC)
+   20 CONTINUE
+      SET(1,2)=AS(2,1,NXYC)
+      SET(1,3)=AS(2,2,NXYC)
+      SET(2,3)=AS(2,3,NXYC)
+      SET(2,1)=SET(1,2)
+      SET(3,1)=SET(1,3)
+      SET(3,2)=SET(2,3)
+      CALL ELSY10(SET,DC,3,0)
+      DO 22 K1=1,3
+      T(K1)=SET(K1,K1)
+   22 CONTINUE
+      DO 24 K1=1,2
+      K2=K1+1
+      DO 24 K3=K2,3
+      IF(T(K1)-T(K3)) 26,24,24
+   26 TEMP=T(K1)
+      T(K1)=T(K3)
+      T(K3)=TEMP
+   24 CONTINUE
+C *** PRINCIPAL STRESSES
+C *** PS 1
+      AS(3,1,NXYC)=T(1)
+C *** PS 2
+      AS(3,2,NXYC)=T(2)
+C *** PS 3
+      AS(3,3,NXYC)=T(3)
+C *** PRINCIPAL SHEAR STRESSES
+C *** PSS 1
+      AS(4,1,NXYC)=0.5*(T(1)-T(3))
+C *** PSS 2
+      AS(4,2,NXYC)=0.5*(T(1)-T(2))
+C *** PSS 3
+      AS(4,3,NXYC)=0.5*(T(2)-T(3))
+C *** NORMAT STRAINS
+C *** EXX
+      AS(6,1,NXYC)=(AS(1,1,NXYC)-VLAY*(AS(1,2,NXYC)+AS(1,3,NXYC)))/ELAY
+C *** EYY
+      AS(6,2,NXYC)=(AS(1,2,NXYC)-VLAY*(AS(1,1,NXYC)+AS(1,3,NXYC)))/ELAY
+C *** EZZ
+      AS(6,3,NXYC)=(AS(1,3,NXYC)-VLAY*(AS(1,1,NXYC)+AS(1,2,NXYC)))/ELAY
+C *** SHEAR STRAINS
+C *** EXY
+      AS(7,1,NXYC)=SSC*AS(2,1,NXYC)
+C *** EXZ
+      AS(7,2,NXYC)=SSC*AS(2,2,NXYC)
+C *** EYZ
+      AS(7,3,NXYC)=SSC*AS(2,3,NXYC)
+C *** PRINCIPAL STRAINS
+C *** PE 1
+      AS(8,1,NXYC)=(T(1)-VLAY*(T(2)+T(3)))/ELAY
+C *** PE 2
+      AS(8,2,NXYC)=(T(2)-VLAY*(T(1)+T(3)))/ELAY
+C *** PE 3
+      AS(8,3,NXYC)=(T(3)-VLAY*(T(1)+T(2)))/ELAY
+C *** PRINCIPAL SHEAR STRAINS
+C *** PSE 1
+      AS(9,1,NXYC)=SSC*AS(4,1,NXYC)
+C *** PSE 2
+      AS(9,2,NXYC)=SSC*AS(4,2,NXYC)
+C *** PSE 3
+      AS(9,3,NXYC)=SSC*AS(4,3,NXYC)
+   10 CONTINUE
+    8 CONTINUE
+      RETURN
+      END

@@ -1,0 +1,68 @@
+      SUBROUTINE ELSY3 ( FM )
+C *** FOR USE WITH ELSYM5
+C *** ELSY3
+C *** DEVELOP EI(K,I,J), S(K,I,J), AND RB(I,J) ARRAYS FOR M VALUE
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      COMMON E(5),V(5),DI(5),R(100),Z(10),EX(32),
+     1        CDAB(5,736),AJ1(184),RJ1(184),RJ0(184),
+     2        VSE,SSE,RDP,VDP,RSE,TSE,ST1,ST2,ST3,ST4,
+     3        WR,WZ,WRL,RL,PRES,RLP,TST1,TST2,TST3,TST4,
+     4        NSYM,NSY,NLSW,NBZ,NGQP,NX,NEX,NR,NRC,NZ,NZC,MSW,
+     5        NEL,NEI,NI,NBLL,LAY,NTEST,NTSI,ITS,IND,NAB,NBZC,
+     6        KSW1,KSW2,KSW3,KSW4,KSW5,KSW6,KSW7,KSW8,KSW9
+      COMMON XL(10),YL(10),XP(10),YP(10),LAYZ(10),
+     1  ANS(6,100,10),AS(9,3,10),TITLE(40),IXR(100),NLD,NXY,IO
+      COMMON / COM1 /
+     1 EI(16,2,2),S(2,2,2),SV(4,9),ISC(4),SA(2,2),RB(2,2),BA(2,2,2),
+     2 TB1,TB2,TB3,TB4,TB5,
+     3 NE,NEXD2,NEIM1
+      RFM= 1.0/FM
+      K1=1
+C *** SET UP ELEMENTS DEPENDENT ON M AND 1.0/M
+      DO 4 K2=1,NE,4
+      EI(K2  ,1,2)= SV(K1,1)              +RFM*SV(K1,5)
+      EI(K2+1,1,1)= SV(K1,2) +FM*SV(K1,7)
+      EI(K2+1,1,2)= SV(K1,3) +FM*SV(K1,8) +RFM*SV(K1,6)
+      EI(K2+1,2,1)=           FM*SV(K1,9)
+      EI(K2+1,2,2)= SV(K1,4) -FM*SV(K1,7)
+      EI(K2+2,1,1)= SV(K1,2) -FM*SV(K1,7)
+      EI(K2+2,1,2)= SV(K1,3) -FM*SV(K1,8) -RFM*SV(K1,6)
+      EI(K2+2,2,1)=          -FM*SV(K1,9)
+      EI(K2+2,2,2)= SV(K1,4) +FM*SV(K1,7)
+      EI(K2+3,1,2)= SV(K1,1)              -RFM*SV(K1,5)
+      K1=K1+1
+    4 CONTINUE
+C *** SET UP SURFACE ARRAY ELEMENTS THAT ARE DEPENDENT ON M
+      S(1,1,1)=FM
+      S(1,2,1)=-FM
+      S(2,1,1)=FM
+      S(2,2,1)=FM
+      GO TO ( 40,30),KSW1
+   30 GO TO (50,51),KSW2
+C *** RIGID BASE WITH FULL FRICTION
+   50 RB(1,1)=TB1-FM*TB4
+      RB(1,2)=RFM*TB2-FM*TB5
+      RB(2,1)=FM*TB3
+      RB(2,2)=TB1+FM*TB4
+      GO TO 52
+C *** RIGID BASE WITH NO FRICTION
+   51 RB(1,1)=-1.0
+      RB(1,2)=-2.0*DI(NI)
+      RB(2,1)=0.0
+      RB(2,2)=1.0
+   52 K7=1
+      K1=NE+1
+      K3=K1+2
+      DO 38 K2=K1,K3,2
+      DO 32 K4=1,2
+      DO 32 K5=1,2
+      SUM=0.0
+      DO 31 K6=1,2
+      SUM=SUM+EI(K2,K4,K6)*RB(K6,K5)
+   31 CONTINUE
+      BA(K7,K4,K5)=SUM
+   32 CONTINUE
+      K7=K7+1
+   38 CONTINUE
+   40 RETURN
+      END

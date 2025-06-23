@@ -1,0 +1,78 @@
+      SUBROUTINE ELSY4 ( FM,M )
+C *** FOR USE WITH ELSYM5
+C *** ELSY4
+C *** ELSYM - BACK SOLVE FOR A(I,J),B(I,J),C(I,J) AND D(I,J)
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+      COMMON E(5),V(5),DI(5),R(100),Z(10),EX(32),
+     1        CDAB(5,736),AJ1(184),RJ1(184),RJ0(184),
+     2        VSE,SSE,RDP,VDP,RSE,TSE,ST1,ST2,ST3,ST4,
+     3        WR,WZ,WRL,RL,PRES,RLP,TST1,TST2,TST3,TST4,
+     4        NSYM,NSY,NLSW,NBZ,NGQP,NX,NEX,NR,NRC,NZ,NZC,MSW,
+     5        NEL,NEI,NI,NBLL,LAY,NTEST,NTSI,ITS,IND,NAB,NBZC,
+     6        KSW1,KSW2,KSW3,KSW4,KSW5,KSW6,KSW7,KSW8,KSW9
+      COMMON XL(10),YL(10),XP(10),YP(10),LAYZ(10),
+     1  ANS(6,100,10),AS(9,3,10),TITLE(40),IXR(100),NLD,NXY,IO
+      COMMON / COM1 /
+     1 EI(16,2,2),S(2,2,2),SV(4,9),ISC(4),SA(2,2),RB(2,2),BA(2,2,2),
+     2 TB1,TB2,TB3,TB4,TB5,
+     3 NE,NEXD2,NEIM1
+C *** EXCLUSIVE ROUTINE ARRAYS
+      DIMENSION VA(4)
+      VA(1)=1.0
+      VA(4)=1.0
+      RFM= 1.0/FM
+      CDAB(NEL,M  )=-SA(1,2)*RFM*RFM/(-SA(2,1)*SA(1,2)+
+     1 SA(2,2)*SA(1,1))
+      CDAB(NEL,M+1)=SA(1,1)*CDAB(NEL,M  )/(-SA(1,2))
+      GO TO ( 20,22),KSW1
+C *** START RIGID BASE ROUTINE
+   22 VAL=FM*DI(NI)*2.0
+      IF(VAL-TST1) 23,23,20
+   23 VAL=EXP(-VAL)
+      CDAB(NEL,M+2)=(RB(1,1)*CDAB(NEL,M  )+RB(1,2)*CDAB(NEL,M+1))*VAL
+      CDAB(NEL,M+3)=(RB(2,1)*CDAB(NEL,M  )+RB(2,2)*CDAB(NEL,M+1))*VAL
+      GO TO 24
+C *** END RIGID BASE ROUTINE
+   20 CDAB(NEL,M+2)=0.0
+      CDAB(NEL,M+3)=0.0
+   24 DO 50 K10=1,NEI
+      K11=NEI-K10+1
+      MP3=M+3
+      DO 45 K1=M,MP3
+      CDAB(K11,K1)=0.0
+   45 CONTINUE
+      K12=K11+1
+      K13=(K11-1)*4+1
+      VAL=2.0*FM*DI(K11)
+      IF(VAL-TST1) 47,47,46
+   46 K6=1
+      K4=1
+      GO TO 48
+   47 VA(2)=EXP(-VAL)
+      K4=2
+      VA(3)=1.0/VA(2)
+      IF(CDAB(K12,M+2)) 43,41,43
+   41 K6=1
+      GO TO 48
+   43 K6=2
+   48 K8=M-2
+      K7=0
+      DO 44 K5=1,K6
+      K2=M-1
+      K8=K8+2
+      K9=K8+1
+      DO 42 K3=1,K4
+      K7=K7+1
+      DO 40 K1=1,2
+      K2=K2+1
+      CDAB(K11,K2)=CDAB(K11,K2)+VA(K7)*(EI(K13,K1,1)*
+     1  CDAB(K12,K8)+EI(K13,K1,2)*CDAB(K12,K9 ))
+   40 CONTINUE
+      K13=K13+2
+   42 CONTINUE
+      K13=K13-3
+   44 CONTINUE
+   50 CONTINUE
+      RETURN
+      END
+ 
