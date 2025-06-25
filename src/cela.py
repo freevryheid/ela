@@ -1,7 +1,7 @@
 import ctypes
 
 # Load the shared library (update the path as needed)
-lib = ctypes.CDLL('./libela.so')  # Change to the actual path of your .so file
+lib = ctypes.CDLL('../build/libcela.so')  # Change to the path of the c .so file
 
 # Define argument and return types for cela
 lib.cela.argtypes = [
